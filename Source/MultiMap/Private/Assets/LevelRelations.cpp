@@ -2,15 +2,18 @@
 
 #include "LevelRelations.h"
 #include "Engine/Engine.h"
+#include "MultiMapGameInstance.h"
 #include "Package.h"
 #include "ShaderCompiler.h"
 #include "AI/Navigation/NavigationSystem.h"
 #include "IXRTrackingSystem.h"
+#include "GameMapsSettings.h"
+#include "GameFramework/GameModeBase.h"
 
 bool ULevelRelations::LoadSubLevel(ULevelRelations* LevelRelations, const FString& LevelName)
 {
 	check(LevelRelations);
-	const FWorldContext* RootContext = &GEngine->GetWorldContexts()[1];
+	const FWorldContext* RootContext = &GEngine->GetWorldContexts()[0]; //Issue #5
 	FString CurrentLevelName = RootContext->World()->GetName();
 	int32 RelationID = LevelRelations->FindRelation(CurrentLevelName);
 
@@ -34,13 +37,25 @@ bool ULevelRelations::LoadSubLevel(ULevelRelations* LevelRelations, const FStrin
 	
 	if (!Container->bIsLoaded)
 	{
+		UMultiMapGameInstance* GameInstance = Cast <UMultiMapGameInstance> (RootContext->OwningGameInstance);
+
+		if (GameInstance == nullptr)
+		{
+			UE_LOG(LogMultiMapPlugin, Fatal, TEXT("Wrong GameInstance used"));
+			return false;
+		}
+
 		FWorldContext* WorldContext = &GEngine->CreateNewWorldContext(EWorldType::Game);
 		WorldContext->OwningGameInstance = RootContext->OwningGameInstance;
+
+		//Setting up CurrentWorld in GameInstance for Fixing Issue #2
+		GameInstance->SetSubWorldContext(WorldContext);
 
 		UWorld* NewWorld = LevelRelations->LoadLevel(WorldContext, LevelName);
 
 		LevelRelations->LevelTree[RelationID].ChildLevels[ContainerID].WorldContext = WorldContext;
 		LevelRelations->LevelTree[RelationID].ChildLevels[ContainerID].bIsLoaded = true;
+		GameInstance->ResetSubWorldContext();
 
 		return true;
 	}
@@ -126,12 +141,14 @@ UWorld* ULevelRelations::LoadLevel(FWorldContext* Context, const FString& Name)
 	Context->SetCurrentWorld(NewWorld);
 	Context->World()->WorldType = Context->WorldType;
 
+	Context->World()->AddToRoot();
+
 	if (!Context->World()->bIsWorldInitialized)
 	{
 		Context->World()->InitWorld();
 	}
 
-	//Context->World()->SetGameMode(URL); //Issue #2
+	Context->World()->SetGameMode(URL); //Issue #2 (Fixed by MultiMapGameInstance)
 
 	//Todo Networking
 
@@ -159,7 +176,7 @@ UWorld* ULevelRelations::LoadLevel(FWorldContext* Context, const FString& Name)
 	Context->LastURL.Map = URL.Map;
 
 //	GEngine->XRSystem->OnBeginPlay(*Context); //Issue #4 (May be not need at all?)
-	Context->World()->BeginPlay();
+	Context->World()->BeginPlay(); //Issue #6 Going to main context ????
 
 	return Context->World();
 }
