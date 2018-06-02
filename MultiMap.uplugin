@@ -1,0 +1,26 @@
+{
+	"FileVersion": 3,
+	"Version": 0,
+	"VersionName": "0.1",
+	"FriendlyName": "MultiMap",
+	"Description": "",
+	"Category": "TehnoMag`s Plugins",
+	"CreatedBy": "Mickail `TehnoMag` Lukianov",
+	"CreatedByURL": "http://proxima-team.ru",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "MultiMap",
+      "Type": "Runtime"
+    },
+    {
+      "Name": "MultiMapED",
+      "Type": "Developer"
+    }
+  ]
+}
