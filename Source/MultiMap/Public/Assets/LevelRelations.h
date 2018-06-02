@@ -72,6 +72,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "MultiMapPlugin")
 		static bool LoadAllSubLevels(ULevelRelations* LevelRelations);
 
+	UFUNCTION(BlueprintCallable, Category = "MultiMapPlugin")
+		static void UnloadSubLevel(ULevelRelations* LevelRelations, const FString& LevelName);
+
 protected:
 
 private:
