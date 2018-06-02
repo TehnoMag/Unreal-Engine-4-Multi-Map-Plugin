@@ -176,7 +176,7 @@ UWorld* ULevelRelations::LoadLevel(FWorldContext* Context, const FString& Name)
 	Context->LastURL.Map = URL.Map;
 
 //	GEngine->XRSystem->OnBeginPlay(*Context); //Issue #4 (May be not need at all?)
-	Context->World()->BeginPlay(); //Issue #6 Going to main context ????
+	Context->World()->BeginPlay();
 
 	return Context->World();
 }
