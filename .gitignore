@@ -99,6 +99,7 @@
 #Unreal specail files
 !*.uasset
 !*.umap
+!/Resources/*
 
 Intermediate/
 obj/
