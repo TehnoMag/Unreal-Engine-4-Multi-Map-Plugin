@@ -14,14 +14,23 @@ bool ULevelRelations::LoadSubLevel(ULevelRelations* LevelRelations, const FStrin
 {
 	check(LevelRelations);
 
-	const FWorldContext* RootContext;
+	const FWorldContext* RootContext = nullptr;
 #if WITH_EDITOR
-	RootContext = GEngine->GetWorldContexts()[0].WorldType == EWorldType::Editor ?
-		&GEngine->GetWorldContexts()[1] : &GEngine->GetWorldContexts()[0];
+	const TIndirectArray <FWorldContext> Contexts = GEngine->GetWorldContexts();
+
+	for (int32 i = 0; i < Contexts.Num(); i++)
+	{
+		if (Contexts[i].OwningGameInstance != nullptr && Contexts[i].WorldType != EWorldType::Editor)
+		{
+			RootContext = &Contexts[i];
+			break;
+		}
+	}
 #else
 	RootContext = &GEngine->GetWorldContexts()[0];
 #endif
-	
+	check(RootContext);
+
 	FString CurrentLevelName = RootContext->World()->GetName();
 	int32 RelationID = LevelRelations->FindRelation(CurrentLevelName);
 
@@ -91,13 +100,13 @@ void ULevelRelations::UnloadSubLevel(ULevelRelations* LevelRelations, const FStr
 			break;
 	}
 
-	if (cId > -1)
+	if (cId > -1 && LevelRelations->LevelTree[rId].ChildLevels[cId].bIsLoaded)
 	{
 		UWorld* World = LevelRelations->LevelTree[rId].ChildLevels[cId].WorldContext->World();
 		GEngine->DestroyWorldContext(World);
 		World->RemoveFromRoot();
 		World->CleanupActors();
-		World->CleanupWorld();
+		World->DestroyWorld(true);
 		LevelRelations->LevelTree[rId].ChildLevels[cId].bIsActive = false;
 		LevelRelations->LevelTree[rId].ChildLevels[cId].bIsLoaded = false;
 		LevelRelations->LevelTree[rId].ChildLevels[cId].WorldContext = nullptr;
